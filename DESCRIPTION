@@ -1,5 +1,5 @@
 Package: KITra
-Title: Custom Color Palettes and Themes for ggplot2
+Title: Custom Color Palettes and Themes for ggplot2 in the CI of the AI Transfer Hub SH
 Version: 0.1.0
 Authors@R: person("Max", "Brede", email = "max.brede@fh-kiel.de", role = c("aut", "cre"))
 Description: Provides custom color palettes and themes for use in ggplot2 plots. The package contains a list of color palettes, as well as functions for extracting and applying the palettes in ggplot2 plots.
@@ -10,5 +10,6 @@ Depends:
 Suggests:
     testthat
 License: GPL-3
-URL: https://github.com/yourusername/KITra
-BugReports: https://github.com/yourusername/KITra/issues
+URL: https://github.com/MBrede/KITra
+BugReports: https://github.com/MBrede/KITra/issues
+RoxygenNote: 7.2.3
