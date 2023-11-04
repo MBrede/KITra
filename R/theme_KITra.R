@@ -10,13 +10,18 @@
 #' @field gradient A gradient palette that goes from red to white to blue.
 #' @field cat A palette of 6 colors suitable for categorical data.
 KITra_colours = list(
-  blues = monochromeR::generate_palette('#01284F', "go_lighter", n_colours = 7),
-  reds = monochromeR::generate_palette('#D60D4C', "go_lighter", n_colours = 7),
-  gradient = c(monochromeR::generate_palette('#D60D4C', "go_lighter", n_colours = 7),
+  blues = \(n)monochromeR::generate_palette('#01284F', "go_lighter", n_colours = n),
+  reds = \(n)monochromeR::generate_palette('#D60D4C', "go_lighter", n_colours = n),
+  gradient = \(n)c(monochromeR::generate_palette('#D60D4C', "go_lighter", n_colours = floor(n/2)),
                      'white',
-                     rev(monochromeR::generate_palette('#01284F', "go_lighter", n_colours = 7))),
-  cat = c('#01284F', '#D60D4C',"#667E95", "#E66D93", "#00182F", "#80072D")
+                     rev(monochromeR::generate_palette('#01284F', "go_lighter", n_colours = floor(n/2)))),
+  cat = \(n)c(monochromeR::generate_palette('#D60D4C', "go_lighter", n_colours = ceiling(n/4) + 1)[-1],
+              monochromeR::generate_palette('#01284F', "go_lighter", n_colours = ceiling(n/4) + 1)[-1],
+              monochromeR::generate_palette('#D60D4C', "go_darker", n_colours = ceiling(n/4)),
+              monochromeR::generate_palette('#01284F', "go_darker", n_colours = ceiling(n/4)))[order(1:(4 * ceiling(n/4)) %% 4, decreasing = T)]
 )
+
+
 
 #' KITra_palettes
 #'
@@ -34,8 +39,8 @@ KITra_palettes = function(name, n, all_palettes = KITra_colours, type = c("discr
   }
   type = match.arg(type)
   out = switch(type,
-               continuous = grDevices::colorRampPalette(palette)(n),
-               discrete = palette[1:n]
+               continuous = grDevices::colorRampPalette(palette(n))(n),
+               discrete = palette(n)
   )
   structure(out, name = name, class = "palette")
 }
@@ -46,9 +51,9 @@ KITra_palettes = function(name, n, all_palettes = KITra_colours, type = c("discr
 #'
 #' @param name The name of the palette to use. Default is "cat".
 #' @return A scale_color_manual function with the specified palette.
-scale_colour_KITra_discrete = function(name = 'cat') {
+scale_colour_KITra_discrete = function(name = 'cat', n) {
   ggplot2::scale_colour_manual(values = KITra_palettes(name,
-                                                       type = "discrete"))
+                                                       type = "discrete", n = n))
 }
 
 #' scale_color_KITra_discrete
@@ -66,9 +71,10 @@ scale_color_KITra_discrete = scale_colour_KITra_discrete
 #'
 #' @param name The name of the palette to use. Default is "cat".
 #' @return A scale_fill_manual function with the specified palette.
-scale_fill_KITra_discrete = function(name = 'cat') {
+scale_fill_KITra_discrete = function(name = 'cat', n) {
   ggplot2::scale_fill_manual(values = KITra_palettes(name,
-                                                   type = "discrete"))
+                                                   type = "discrete",
+                                                   n = n))
 }
 
 #' scale_colour_KITra_continuous
@@ -77,9 +83,10 @@ scale_fill_KITra_discrete = function(name = 'cat') {
 #'
 #' @param name The name of the palette to use. Default is "gradient".
 #' @return A scale_color_manual function with the specified palette.
-scale_colour_KITra_continuous = function(name = 'gradient') {
+scale_colour_KITra_continuous = function(name = 'gradient', n) {
   ggplot2::scale_colour_gradientn(colours = KITra_palettes(name = name,
-                                                         type = "continuous"))
+                                                         type = "continuous",
+                                                         n = n))
 }
 
 #' scale_color_KITra_continuous
@@ -96,9 +103,9 @@ scale_color_KITra_continuous = scale_colour_KITra_continuous
 #'
 #' @param name The name of the palette to use. Default is "gradient".
 #' @return A scale_fill_manual function with the specified palette.
-scale_fill_KITra_continuous = function(name = 'gradient') {
+scale_fill_KITra_continuous = function(name = 'gradient', n) {
   ggplot2::scale_fill_gradientn(colours = KITra_palettes(name = name,
-                                                       type = "continuous"))
+                                                       type = "continuous", n=n))
 }
 
 #' theme_KITra
@@ -114,8 +121,8 @@ theme_KITra <- function(base_size = 12) {
   light_text <-  text[3]
 
   theme_minimal(base_size = base_size) +
-    theme(text = element_text(colour = mid_text, family = "Arial", lineheight = 1.1),
-          plot.title = element_text(colour = dark_text, family = "Arial", size = rel(1.6), margin = margin(12, 0, 8, 0)),
+    theme(text = element_text(colour = mid_text, family = "DejaVu Sans", lineheight = 1.1),
+          plot.title = element_text(colour = dark_text, family = "DejaVu Sans", size = rel(1.6), margin = margin(12, 0, 8, 0)),
           plot.subtitle = element_text(size = rel(1.1), margin = margin(4, 0, 0, 0)),
           axis.text.y = element_text(colour = light_text, size = rel(0.8)),
           axis.title.y = element_text(size = rel(1), margin = margin(0, 4, 0, 0)),
@@ -124,6 +131,28 @@ theme_KITra <- function(base_size = 12) {
           legend.position = "top",
           legend.justification = 1,
           panel.grid = element_line(colour = "#F3F4F5"),
+          plot.caption = element_text(size = rel(0.8), margin = margin(8, 0, 0, 0)),
+          plot.margin = margin(0.25, 0.25, 0.25, 0.25,"cm"))
+}
+
+#' theme_KITra_void
+#'
+#' Applies a custom theme to a ggplot2 plot, with custom colors for text and without grid elements
+#'
+#' @param base_size The base text size to use in the theme. Default is 12.
+#' @return A ggplot2 theme object that can be added to a plot using the `+` operator.
+theme_KITra_void <- function(base_size = 12) {
+  dark_text <-  '#01284F'
+  text <- monochromeR::generate_palette(dark_text, "go_lighter", n_colours = 5)
+  mid_text <-  text[2]
+  light_text <-  text[3]
+
+  theme_void(base_size = base_size) +
+    theme(text = element_text(colour = mid_text, family = "DejaVu Sans", lineheight = 1.1),
+          plot.title = element_text(colour = dark_text, family = "DejaVu Sans", size = rel(1.6), margin = margin(12, 0, 8, 0)),
+          plot.subtitle = element_text(size = rel(1.1), margin = margin(4, 0, 0, 0)),
+          legend.position = "bottom",
+          legend.justification = 0,
           plot.caption = element_text(size = rel(0.8), margin = margin(8, 0, 0, 0)),
           plot.margin = margin(0.25, 0.25, 0.25, 0.25,"cm"))
 }
